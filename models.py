@@ -7,3 +7,4 @@ class Transacao(BaseModel):
     status: str
     observacoes: Optional[str] = None
     produto: Optional[str] = None
+    quantidade: Optional[int] = None

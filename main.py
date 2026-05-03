@@ -4,8 +4,10 @@ from fastapi.responses import StreamingResponse
 from database import supabase
 from models import Transacao
 from pydantic import BaseModel
+from fastapi import HTTPException
 import csv
 import io
+import bcrypt
 
 app = FastAPI(title="Sistema Wallys do Gelo")
 
@@ -55,7 +57,52 @@ class Login(BaseModel):
 
 @app.post("/login")
 def login(dados: Login):
-    result = supabase.table("usuarios").select("*").eq("usuario", dados.usuario).eq("senha", dados.senha).execute()
+    result = supabase.table("usuarios").select("*").eq("usuario", dados.usuario).execute()
+
     if not result.data:
-        raise HTTPException(status_code=401, detail="Usuário ou senha incorretos")
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+    user = result.data[0]
+
+    senha_hash = user["senha"]
+
+    if not bcrypt.checkpw(dados.senha.encode(), senha_hash.encode()):
+        raise HTTPException(status_code=401, detail="Senha incorreta")
+
     return {"msg": "ok", "usuario": dados.usuario}
+
+# DELETAR TRANSAÇÃO
+@app.delete("/transacoes/{id}")
+def deletar_transacao(id: str):
+    data = supabase.table("transacoes").delete().eq("id", id).execute()
+    return data
+
+# EDITAR TRANSAÇÃO
+@app.put("/transacoes/{id}")
+def editar_transacao(id: str, transacao: Transacao):
+    data = supabase.table("transacoes").update(transacao.dict()).eq("id", id).execute()
+    return data
+
+class Cadastro(BaseModel):
+    usuario: str
+    senha: str
+
+@app.post("/cadastro")
+def cadastro(dados: Cadastro):
+    # verificar se já existe
+    existe = supabase.table("usuarios").select("*").eq("usuario", dados.usuario).execute()
+
+    if existe.data:
+        raise HTTPException(status_code=400, detail="Usuário já existe")
+
+    # gerar hash da senha
+    senha_bytes = dados.senha.encode('utf-8')
+    hash_senha = bcrypt.hashpw(senha_bytes, bcrypt.gensalt())
+
+    # salvar no banco
+    supabase.table("usuarios").insert({
+        "usuario": dados.usuario,
+        "senha": hash_senha.decode('utf-8')
+    }).execute()
+
+    return {"msg": "Usuário cadastrado com sucesso"}
