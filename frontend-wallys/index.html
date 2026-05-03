@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Sistema Wallys do Gelo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--bg:#080d14;--surface:#0e1621;--surface2:#141f2e;--border:#1e2d40;--border2:#243548;--text:#e8f0f8;--muted:#4a6278;--muted2:#6b8299;--accent:#00d4ff;--accent-dim:#00d4ff18;--green:#00e5a0;--green-dim:#00e5a018;--red:#ff4d6a;--red-dim:#ff4d6a18;--yellow:#ffb830;--yellow-dim:#ffb83018;--purple:#9b72ff;--sidebar-w:240px;--bottom-nav-h:64px;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{height:100%;overflow-x:hidden;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);}
+    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;}
+    .login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:380px;text-align:center;}
+    .login-icon{font-size:48px;margin-bottom:1rem;}
+    .login-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px;}
+    .login-sub{font-size:13px;color:var(--muted2);margin-bottom:2rem;}
+    .login-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;margin-bottom:12px;transition:border-color .15s;}
+    .login-input:focus{border-color:var(--accent);}
+    .login-btn{width:100%;background:var(--accent);color:#000;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;}
+    .login-error{color:var(--red);font-size:12px;margin-top:10px;display:none;}
+    .app{display:none;min-height:100vh;}
+    body.logged-in .login-wrap{display:none;}
+    body.logged-in .app{display:block;}
+    .sidebar{width:var(--sidebar-w);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.5rem 1rem;position:fixed;top:0;left:0;z-index:200;transition:transform .3s ease;}
+    .logo{display:flex;align-items:center;gap:10px;padding:0 .5rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+    .logo-icon{width:36px;height:36px;background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+    .logo-text{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.2;}
+    .logo-text span{color:var(--accent);display:block;font-weight:400;font-size:11px;}
+    .nav-section{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:0 .5rem;margin:.5rem 0;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:var(--muted2);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:2px;}
+    .nav-item:hover{background:var(--surface2);color:var(--text);}
+    .nav-item.active{background:var(--accent-dim);color:var(--accent);border:1px solid #00d4ff22;}
+    .nav-icon{font-size:15px;width:20px;text-align:center;}
+    .sidebar-footer{margin-top:auto;padding-top:1rem;border-top:1px solid var(--border);font-size:11px;color:var(--muted);padding-left:.5rem;}
+    .user-badge{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted2);margin-bottom:6px;}
+    .user-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+    .logout-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:12px;color:var(--red);cursor:pointer;margin-bottom:6px;}
+    .logout-btn:hover{background:var(--red-dim);}
+    .sidebar-overlay{display:none;position:fixed;inset:0;background:#000000aa;z-index:199;}
+    .sidebar-overlay.open{display:block;}
+    .main{margin-left:var(--sidebar-w);padding:2rem 2.5rem;min-height:100vh;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;gap:12px;}
+    .topbar-left{display:flex;align-items:center;gap:12px;min-width:0;}
+    .topbar-left h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;}
+    .topbar-left p{font-size:13px;color:var(--muted2);margin-top:2px;}
+    .topbar-right{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+    .btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;border:none;white-space:nowrap;}
+    .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
+    .btn-outline:hover{border-color:var(--muted2);color:var(--text);}
+    .btn-primary{background:var(--accent);color:#000;font-weight:600;}
+    .btn-primary:hover{opacity:.85;}
+    .menu-toggle{display:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer;color:var(--text);font-size:18px;line-height:1;flex-shrink:0;}
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:2rem;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;}
+    .card-label{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .card-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+    .card-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;}
+    .card-badge{display:inline-block;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;}
+    .c-green{color:var(--green);}.c-red{color:var(--red);}.c-accent{color:var(--accent);}.c-yellow{color:var(--yellow);}
+    .badge-green{background:var(--green-dim);color:var(--green);}.badge-red{background:var(--red-dim);color:var(--red);}.badge-accent{background:var(--accent-dim);color:var(--accent);}.badge-yellow{background:var(--yellow-dim);color:var(--yellow);}
+    .grid-2{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:1.5rem;}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem;}
+    .panel:last-child{margin-bottom:0;}
+    .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;}
+    .panel-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:600;}
+    .panel-sub{font-size:12px;color:var(--muted2);margin-top:2px;}
+    .chart-wrap{position:relative;height:180px;}
+    .tx-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:8px;}
+    .tx-item:last-child{border-bottom:none;}
+    .tx-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .tx-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+    .tx-name{font-size:13px;font-weight:500;}
+    .tx-meta{font-size:11px;color:var(--muted2);margin-top:2px;}
+    .tx-right{text-align:right;flex-shrink:0;}
+    .tx-val{font-size:14px;font-weight:600;font-family:'Syne',sans-serif;}
+    .tx-status{font-size:10px;margin-top:3px;padding:2px 7px;border-radius:20px;display:inline-block;}
+    .produto-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+    .produto-row:last-child{margin-bottom:0;}
+    .produto-info{flex:1;min-width:0;}
+    .produto-nome{font-size:13px;font-weight:500;}
+    .produto-detail{font-size:11px;color:var(--muted2);margin-top:3px;}
+    .produto-lucro{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;flex-shrink:0;}
+    .bar-track{background:var(--surface2);border-radius:4px;height:4px;margin-top:6px;overflow:hidden;}
+    .bar-fill{height:100%;border-radius:4px;}
+    .form-group{margin-bottom:12px;}
+    .form-label{font-size:11px;color:var(--muted2);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.06em;}
+    select,input[type="text"],input[type="number"]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none;}
+    select:focus,input:focus{border-color:var(--accent);}
+    select option{background:var(--surface2);}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .valor-preview{background:var(--green-dim);border:1px solid var(--green);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700;color:var(--green);text-align:center;margin-bottom:12px;display:none;}
+    .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px;}
+    thead tr{border-bottom:1px solid var(--border);}
+    th{padding:10px 12px;text-align:left;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+    td{padding:10px 12px;border-bottom:1px solid var(--border);}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:var(--surface2);}
+    .btn-edit{background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;margin-right:4px;}
+    .btn-delete{background:var(--red-dim);border:1px solid var(--red);color:var(--red);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;}
+    .modal-overlay{display:none;position:fixed;inset:0;background:#00000088;z-index:300;align-items:flex-end;justify-content:center;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:1.5rem;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:slideUp .25s ease;}
+    @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+    .modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1.25rem;}
+    .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+    .modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+    .modal-close{background:none;border:none;color:var(--muted2);font-size:20px;cursor:pointer;padding:4px;}
+    .toast{position:fixed;bottom:calc(var(--bottom-nav-h) + 1rem);right:1rem;left:1rem;color:#000;font-weight:600;font-size:13px;padding:14px 20px;border-radius:12px;z-index:999;display:none;text-align:center;}
+    .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:var(--surface);border-top:1px solid var(--border);z-index:200;}
+    .bottom-nav-inner{display:flex;height:100%;}
+    .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--muted2);font-size:10px;transition:color .15s;border:none;background:none;}
+    .bnav-item.active{color:var(--accent);}
+    .bnav-icon{font-size:20px;line-height:1;}
+    .fab{display:none;position:fixed;bottom:calc(var(--bottom-nav-h) + 1rem);right:1rem;width:52px;height:52px;background:var(--accent);border-radius:50%;border:none;font-size:24px;color:#000;cursor:pointer;z-index:201;box-shadow:0 4px 20px #00d4ff44;align-items:center;justify-content:center;}
+    .view{display:none;}
+    .view.active{display:block;}
+    @media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);}
+      .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px #00000066;}
+      .main{margin-left:0;padding:1rem 1rem calc(var(--bottom-nav-h) + 1rem);}
+      .menu-toggle{display:flex;align-items:center;justify-content:center;}
+      .topbar-right .btn-outline{display:none;}
+      .topbar-right .btn-primary{display:none;}
+      .cards{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
+      .card{padding:1rem;}
+      .card-value{font-size:20px;}
+      .bottom-nav{display:block;}
+      .fab{display:flex;}
+      .form-grid{grid-template-columns:1fr;}
+      .toast{bottom:calc(var(--bottom-nav-h) + .75rem);}
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-icon">❄</div>
+    <div class="login-title">Wallys do Gelo</div>
+    <div class="login-sub">Faca login para continuar</div>
+    <input class="login-input" type="text" id="l-usuario" placeholder="Usuario" autocomplete="username"/>
+    <input class="login-input" type="password" id="l-senha" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"/>
+    <button class="login-btn" onclick="fazerLogin()">Entrar</button>
+    <div class="login-error" id="login-erro">Usuario ou senha incorretos</div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="fecharSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">❄</div>
+      <div class="logo-text">Wallys do Gelo <span>Sistema de Gestao</span></div>
+    </div>
+    <div class="nav-section">Menu</div>
+    <a class="nav-item active" id="nav-dashboard" onclick="showView('dashboard',this);fecharSidebar()"><span class="nav-icon">▦</span> Dashboard</a>
+    <a class="nav-item" id="nav-transacoes" onclick="showView('transacoes',this);fecharSidebar()"><span class="nav-icon">↕</span> Transacoes</a>
+    <a class="nav-item" id="nav-produtos" onclick="showView('produtos',this);fecharSidebar()"><span class="nav-icon">◈</span> Produtos</a>
+    <a class="nav-item" id="nav-fiado" onclick="showView('fiado',this);fecharSidebar()"><span class="nav-icon">⏱</span> Fiado</a>
+    <div class="nav-section" style="margin-top:1rem;">Relatorios</div>
+    <a class="nav-item" href="https://sistema-wallys-do-gelo-production.up.railway.app/relatorio/csv"><span class="nav-icon">⬇</span> Baixar CSV</a>
+    <div class="sidebar-footer">
+      <div class="user-badge"><span class="user-dot"></span><span id="usuario-logado">-</span></div>
+      <div class="logout-btn" onclick="logout()">Sair</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="abrirSidebar()">☰</button>
+        <div><h1 id="page-title">Dashboard</h1><p id="page-sub">Visao geral do mes atual</p></div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-outline" onclick="atualizarPaginaAtual()">↺ Atualizar</button>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Nova</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="cards">
+        <div class="card"><div class="card-label"><span class="card-dot" style="background:var(--green)"></span>Receita</div><div class="card-value c-green" id="card-receita">R$ 0,00</div><span class="card-badge badge-green">Vendas pagas</span></div>
+        <div class="card"><div class="card-label"><span class="card-dot" style="background:var(--red)"></span>Custos</div><div class="card-value c-red" id="card-custos">R$ 0,00</div><span class="card-badge badge-red">Compras</span></div>
+        <div class="card"><div class="card-label"><span class="card-dot" style="background:var(--accent)"></span>Lucro</div><div class="card-value c-accent" id="card-lucro">R$ 0,00</div><span class="card-badge badge-accent">Liquido</span></div>
+        <div class="card"><div class="card-label"><span class="card-dot" style="background:var(--yellow)"></span>Fiado</div><div class="card-value c-yellow" id="card-pendente">R$ 0,00</div><span class="card-badge badge-yellow">Pendente</span></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:1.5rem;">
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel-header"><div><div class="panel-title">Receita x Custos x Lucro</div><div class="panel-sub">Resumo financeiro</div></div></div>
+          <div class="chart-wrap"><canvas id="grafico-resumo"></canvas></div>
+        </div>
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel-header"><div class="panel-title">Produtos</div></div>
+          <div class="produto-row">
+            <div style="width:40px;height:40px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🧊</div>
+            <div class="produto-info"><div class="produto-nome">Gelo em Cubo</div><div class="produto-detail">Custo R$4,25 · Venda R$7,00</div><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--accent);"></div></div></div>
+            <div class="produto-lucro c-green">R$2,75</div>
+          </div>
+          <div class="produto-row">
+            <div style="width:40px;height:40px;border-radius:10px;background:#9b72ff18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🍓</div>
+            <div class="produto-info"><div class="produto-nome">Gelo Saborizado</div><div class="produto-detail">Custo R$2,90 · Venda R$6,00</div><div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--purple);"></div></div></div>
+            <div class="produto-lucro c-green">R$3,10</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Ultimas Transacoes</div><a class="nav-item" style="padding:6px 12px;font-size:12px;" onclick="showView('transacoes',null)">Ver todas →</a></div>
+        <div id="ultimas-tx"><div style="text-align:center;padding:2rem;color:var(--muted2);font-size:13px;">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- TRANSACOES -->
+    <div class="view" id="view-transacoes">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Todas as Transacoes</div><button class="btn btn-primary" onclick="abrirModal()">+ Nova</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Valor</th><th>Status</th><th>Obs</th><th>Data</th><th>Acoes</th></tr></thead>
+            <tbody id="tabela-todas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTOS -->
+    <div class="view" id="view-produtos">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Tabela de Produtos</div></div>
+        <table><thead><tr><th>Produto</th><th>Custo</th><th>Venda</th><th>Lucro/un</th></tr></thead>
+        <tbody>
+          <tr><td>🧊 Gelo em Cubo</td><td class="c-red">R$4,25</td><td class="c-green">R$7,00</td><td class="c-accent">R$2,75</td></tr>
+          <tr><td>🍓 Gelo Saborizado</td><td class="c-red">R$2,90</td><td class="c-green">R$6,00</td><td class="c-accent">R$3,10</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- FIADO -->
+    <div class="view" id="view-fiado">
+      <div class="panel">
+        <div class="panel-header">
+          <div><div class="panel-title">Clientes com Fiado</div><div class="panel-sub">Pendentes de pagamento</div></div>
+          <div class="card-value c-yellow" id="fiado-total" style="font-size:20px;">R$ 0,00</div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Produto</th><th>Valor</th><th>Data</th></tr></thead><tbody id="tabela-fiado"></tbody></table></div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bnav-item active" id="bn-dashboard" onclick="showView('dashboard',null);setBnav('dashboard')"><span class="bnav-icon">▦</span><span>Inicio</span></button>
+      <button class="bnav-item" id="bn-transacoes" onclick="showView('transacoes',null);setBnav('transacoes')"><span class="bnav-icon">↕</span><span>Vendas</span></button>
+      <button class="bnav-item" id="bn-fiado" onclick="showView('fiado',null);setBnav('fiado')"><span class="bnav-icon">⏱</span><span>Fiado</span></button>
+      <button class="bnav-item" id="bn-produtos" onclick="showView('produtos',null);setBnav('produtos')"><span class="bnav-icon">◈</span><span>Produtos</span></button>
+    </div>
+  </nav>
+  <button class="fab" onclick="abrirModal()">+</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="fecharModalFora(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nova Transacao</div>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select id="f-tipo" onchange="atualizarCalculo()">
+          <option value="saida">Venda (Saida)</option>
+          <option value="entrada">Compra (Custo)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produto</label>
+        <select id="f-produto" onchange="atualizarCalculo()">
+          <option value="Gelo em Cubo">🧊 Gelo em Cubo</option>
+          <option value="Gelo Saborizado">🍓 Gelo Saborizado</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- QUANTIDADE (so para vendas de gelo) -->
+    <div id="bloco-quantidade" class="form-group">
+      <label class="form-label">Quantidade de unidades</label>
+      <input type="number" id="f-quantidade" min="1" placeholder="Ex: 5" inputmode="numeric" oninput="atualizarCalculo()"/>
+    </div>
+
+    <!-- PREVIEW DO VALOR CALCULADO -->
+    <div class="valor-preview" id="valor-preview">Total: R$ 0,00</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Valor Total (R$)</label>
+        <input type="number" id="f-valor" step="0.01" placeholder="0,00" inputmode="decimal"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="f-status">
+          <option value="pago">Pago</option>
+          <option value="pendente">Pendente (Fiado)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Observacoes</label>
+      <input type="text" id="f-obs" placeholder="Ex: Cliente Joao, pagara sexta"/>
+    </div>
+
+    <button class="btn btn-primary" id="btn-registrar" style="width:100%;padding:14px;font-size:15px;margin-top:8px;border-radius:12px;" onclick="registrar()">Registrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Transacao registrada!</div>
+
+<script>
+const API = "https://sistema-wallys-do-gelo-production.up.railway.app";
+let chartInstance = null;
+let editandoId = null;
+let viewAtual = 'dashboard';
+
+// Precos dos produtos
+const PRECOS = {
+  'Gelo em Cubo':    { venda: 7.00,  custo: 4.25 },
+  'Gelo Saborizado': { venda: 6.00,  custo: 2.90 },
+  'Outro':           { venda: null,  custo: null  }
+};
+
+function fmt(val) {
+  return 'R$ ' + parseFloat(val||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function showToast(msg, cor) {
+  var t = document.getElementById('toast');
+  t.style.background = cor || 'var(--green)';
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+// ── CALCULO AUTOMATICO ──
+function atualizarCalculo() {
+  var tipo = document.getElementById('f-tipo').value;
+  var produto = document.getElementById('f-produto').value;
+  var qtdEl = document.getElementById('f-quantidade');
+  var blocoQtd = document.getElementById('bloco-quantidade');
+  var preview = document.getElementById('valor-preview');
+  var valorEl = document.getElementById('f-valor');
+
+  // Mostra campo quantidade so para vendas de gelo (nao outro)
+  if (tipo === 'saida' && produto !== 'Outro') {
+    blocoQtd.style.display = 'block';
+    var qtd = parseInt(qtdEl.value) || 0;
+    var preco = PRECOS[produto] ? PRECOS[produto].venda : null;
+    if (preco && qtd > 0) {
+      var total = preco * qtd;
+      valorEl.value = total.toFixed(2);
+      preview.textContent = 'Total: ' + fmt(total) + ' (' + qtd + ' x ' + fmt(preco) + ')';
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+      if (!qtd) valorEl.value = '';
+    }
+  } else if (tipo === 'entrada' && produto !== 'Outro') {
+    blocoQtd.style.display = 'block';
+    var qtd2 = parseInt(qtdEl.value) || 0;
+    var preco2 = PRECOS[produto] ? PRECOS[produto].custo : null;
+    if (preco2 && qtd2 > 0) {
+      var total2 = preco2 * qtd2;
+      valorEl.value = total2.toFixed(2);
+      preview.textContent = 'Total: ' + fmt(total2) + ' (' + qtd2 + ' x ' + fmt(preco2) + ')';
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+      if (!qtd2) valorEl.value = '';
+    }
+  } else {
+    blocoQtd.style.display = 'none';
+    preview.style.display = 'none';
+  }
+}
+
+// ── LOGIN ──
+async function fazerLogin() {
+  var usuario = document.getElementById('l-usuario').value.trim();
+  var senha = document.getElementById('l-senha').value.trim();
+  if (!usuario || !senha) return;
+  try {
+    var res = await fetch(API+'/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({usuario:usuario, senha:senha})
+    });
+    if (res.ok) {
+      localStorage.setItem('wallys_user', usuario);
+      entrarNoApp(usuario);
+    } else {
+      document.getElementById('login-erro').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('login-erro').style.display = 'block';
+  }
+}
+
+function entrarNoApp(usuario) {
+  document.getElementById('usuario-logado').textContent = usuario;
+  document.body.classList.add('logged-in');
+  carregarTudo();
+}
+
+function logout() {
+  localStorage.removeItem('wallys_user');
+  document.body.classList.remove('logged-in');
+  document.getElementById('l-usuario').value = '';
+  document.getElementById('l-senha').value = '';
+  document.getElementById('login-erro').style.display = 'none';
+}
+
+window.addEventListener('load', function() {
+  var usuario = localStorage.getItem('wallys_user');
+  if (usuario) entrarNoApp(usuario);
+});
+
+// ── SIDEBAR ──
+function abrirSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+}
+function fecharSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function setBnav(name) {
+  document.querySelectorAll('.bnav-item').forEach(function(b){ b.classList.remove('active'); });
+  var el = document.getElementById('bn-'+name);
+  if (el) el.classList.add('active');
+}
+
+// ── VIEWS ──
+var titles = {
+  dashboard: ['Dashboard','Visao geral do mes atual'],
+  transacoes: ['Transacoes','Historico completo'],
+  produtos: ['Produtos','Tabela de precos'],
+  fiado: ['Fiado','Clientes pendentes']
+};
+
+function showView(name, sidebarEl) {
+  viewAtual = name;
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('view-'+name).classList.add('active');
+  if (sidebarEl) sidebarEl.classList.add('active');
+  // Ativa nav correta na sidebar
+  var navEl = document.getElementById('nav-'+name);
+  if (navEl) navEl.classList.add('active');
+  if (titles[name]) {
+    document.getElementById('page-title').textContent = titles[name][0];
+    document.getElementById('page-sub').textContent = titles[name][1];
+  }
+  if (name === 'transacoes') carregarTabela();
+  if (name === 'fiado') carregarFiado();
+  if (name === 'dashboard') carregarTudo();
+}
+
+// ── BOTAO ATUALIZAR (atualiza a pagina atual) ──
+function atualizarPaginaAtual() {
+  if (viewAtual === 'dashboard') carregarTudo();
+  else if (viewAtual === 'transacoes') { carregarTudo(); carregarTabela(); }
+  else if (viewAtual === 'fiado') { carregarResumo(); carregarFiado(); }
+  else if (viewAtual === 'produtos') carregarResumo();
+  showToast('Atualizado!', 'var(--accent)');
+}
+
+// ── DATA ──
+async function carregarResumo() {
+  try {
+    var d = await (await fetch(API+'/resumo')).json();
+    document.getElementById('card-receita').textContent = fmt(d.receita_total);
+    document.getElementById('card-custos').textContent = fmt(d.custos_total);
+    document.getElementById('card-lucro').textContent = fmt(d.lucro_liquido);
+    document.getElementById('card-pendente').textContent = fmt(d.pendente);
+    document.getElementById('fiado-total').textContent = fmt(d.pendente);
+    desenharGrafico(d.receita_total, d.custos_total, d.lucro_liquido);
+  } catch(e) {}
+}
+
+function desenharGrafico(r, c, l) {
+  if (chartInstance) chartInstance.destroy();
+  var ctx = document.getElementById('grafico-resumo').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Receita','Custos','Lucro'],
+      datasets: [{data:[r,c,l], backgroundColor:['#00e5a022','#ff4d6a22','#00d4ff22'], borderColor:['#00e5a0','#ff4d6a','#00d4ff'], borderWidth:1.5, borderRadius:8}]
+    },
+    options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{ticks:{color:'#4a6278',font:{size:11}},grid:{color:'#1e2d40'}},x:{ticks:{color:'#6b8299'},grid:{display:false}}}}
+  });
+}
+
+async function carregarUltimas() {
+  try {
+    var json = await (await fetch(API+'/transacoes')).json();
+    var lista = (json.data||[]).slice(-5).reverse();
+    var el = document.getElementById('ultimas-tx');
+    if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted2);font-size:13px;">Nenhuma transacao ainda.</div>'; return; }
+    el.innerHTML = lista.map(function(t) {
+      var qtdInfo = t.quantidade ? ' · ' + t.quantidade + 'un' : '';
+      return '<div class="tx-item"><div class="tx-left"><div class="tx-icon" style="background:'+(t.tipo==='saida'?'var(--green-dim)':'var(--red-dim)')+'">'+( t.tipo==='saida'?'💰':'🛒')+'</div><div><div class="tx-name">'+(t.produto||'Outro')+'</div><div class="tx-meta">'+(t.observacoes?t.observacoes+' · ':'')+new Date(t.created_at).toLocaleDateString('pt-BR')+qtdInfo+'</div></div></div><div class="tx-right"><div class="tx-val '+(t.tipo==='saida'?'c-green':'c-red')+'">'+(t.tipo==='saida'?'+':'-')+fmt(t.valor)+'</div><span class="tx-status '+(t.status==='pago'?'badge-green':'badge-yellow')+'">'+(t.status==='pago'?'Pago':'Fiado')+'</span></div></div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function carregarTabela() {
+  try {
+    var json = await (await fetch(API+'/transacoes')).json();
+    var lista = (json.data||[]).reverse();
+    document.getElementById('tabela-todas').innerHTML = lista.map(function(t) {
+      var obs = (t.observacoes||'').replace(/\\/g,'').replace(/'/g,' ');
+      var prod = (t.produto||'').replace(/'/g,' ');
+      var qtd = t.quantidade || '-';
+      return '<tr><td style="color:'+(t.tipo==='saida'?'var(--green)':'var(--red)')+'">'+( t.tipo==='saida'?'Venda':'Compra')+'</td><td>'+(t.produto||'-')+'</td><td style="color:var(--muted2)">'+qtd+'</td><td class="'+(t.tipo==='saida'?'c-green':'c-red')+'">'+fmt(t.valor)+'</td><td><span class="card-badge '+(t.status==='pago'?'badge-green':'badge-yellow')+'">'+(t.status==='pago'?'Pago':'Pendente')+'</span></td><td style="color:var(--muted2)">'+(t.observacoes||'-')+'</td><td style="color:var(--muted2)">'+new Date(t.created_at).toLocaleDateString('pt-BR')+'</td><td><button class="btn-edit" onclick="editarTransacao(\''+t.id+'\',\''+t.tipo+'\',\''+prod+'\',\''+t.valor+'\',\''+t.status+'\',\''+obs+'\')">✏️ Editar</button><button class="btn-delete" onclick="deletarTransacao(\''+t.id+'\')">🗑️</button></td></tr>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function carregarFiado() {
+  try {
+    var json = await (await fetch(API+'/transacoes')).json();
+    var lista = (json.data||[]).filter(function(t){ return t.status==='pendente'; }).reverse();
+    var tbody = document.getElementById('tabela-fiado');
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted2);padding:2rem;">Nenhum fiado pendente!</td></tr>'; return; }
+    tbody.innerHTML = lista.map(function(t) {
+      return '<tr><td>'+(t.observacoes||'-')+'</td><td>'+(t.produto||'-')+'</td><td class="c-yellow">'+fmt(t.valor)+'</td><td style="color:var(--muted2)">'+new Date(t.created_at).toLocaleDateString('pt-BR')+'</td></tr>';
+    }).join('');
+  } catch(e) {}
+}
+
+// ── EDITAR ──
+function editarTransacao(id, tipo, produto, valor, status, observacoes) {
+  editandoId = id;
+  document.getElementById('f-tipo').value = tipo;
+  document.getElementById('f-produto').value = produto;
+  document.getElementById('f-valor').value = valor;
+  document.getElementById('f-status').value = status;
+  document.getElementById('f-obs').value = observacoes;
+  document.getElementById('f-quantidade').value = '';
+  document.getElementById('bloco-quantidade').style.display = 'none';
+  document.getElementById('valor-preview').style.display = 'none';
+  document.getElementById('modal-title').textContent = 'Editar Transacao';
+  document.getElementById('btn-registrar').textContent = 'Salvar Alteracoes';
+  abrirModal();
+}
+
+// ── DELETAR ──
+async function deletarTransacao(id) {
+  if (!confirm('Tem certeza que deseja excluir esta transacao?')) return;
+  try {
+    await fetch(API+'/transacoes/'+id, {method:'DELETE'});
+    showToast('Transacao excluida!', 'var(--red)');
+    carregarTudo();
+    carregarTabela();
+  } catch(e) { alert('Erro ao excluir!'); }
+}
+
+// ── MODAL ──
+function abrirModal() {
+  if (!editandoId) {
+    // Reset para nova transacao
+    document.getElementById('f-tipo').value = 'saida';
+    document.getElementById('f-produto').value = 'Gelo em Cubo';
+    document.getElementById('f-quantidade').value = '';
+    document.getElementById('f-valor').value = '';
+    document.getElementById('f-status').value = 'pago';
+    document.getElementById('f-obs').value = '';
+    document.getElementById('bloco-quantidade').style.display = 'block';
+    document.getElementById('valor-preview').style.display = 'none';
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('open');
+  editandoId = null;
+  document.getElementById('modal-title').textContent = 'Nova Transacao';
+  document.getElementById('btn-registrar').textContent = 'Registrar';
+  document.getElementById('valor-preview').style.display = 'none';
+}
+
+function fecharModalFora(e) { if (e.target.id==='modal') fecharModal(); }
+
+// ── REGISTRAR / SALVAR ──
+async function registrar() {
+  var valor = parseFloat(document.getElementById('f-valor').value);
+  if (!valor || valor <= 0) { alert('Informe um valor valido!'); return; }
+  var quantidade = parseInt(document.getElementById('f-quantidade').value) || null;
+  var body = {
+    tipo: document.getElementById('f-tipo').value,
+    produto: document.getElementById('f-produto').value,
+    valor: valor,
+    status: document.getElementById('f-status').value,
+    observacoes: document.getElementById('f-obs').value,
+    quantidade: quantidade
+  };
+  try {
+    if (editandoId) {
+      await fetch(API+'/transacoes/'+editandoId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      showToast('Transacao atualizada!', 'var(--accent)');
+    } else {
+      await fetch(API+'/transacoes', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      showToast('Transacao registrada!', 'var(--green)');
+    }
+    fecharModal();
+    carregarTudo();
+    if (viewAtual === 'transacoes') carregarTabela();
+  } catch(e) { alert('Erro ao salvar!'); }
+}
+
+function carregarTudo() { carregarResumo(); carregarUltimas(); }
+</script>
+</body>
+</html>

@@ -35,8 +35,8 @@ def listar_transacoes():
 @app.get("/resumo")
 def resumo():
     data = supabase.table("transacoes").select("*").execute().data
-    receita = sum(t["valor"] for t in data if t["tipo"] == "saida" and t["status"] == "pago")
-    custos  = sum(t["valor"] for t in data if t["tipo"] == "entrada")
+    receita  = sum(t["valor"] for t in data if t["tipo"] == "entrada" and t["status"] == "pago")
+    custos   = sum(t["valor"] for t in data if t["tipo"] == "saida" and t["status"] == "pago")
     pendente = sum(t["valor"] for t in data if t["status"] == "pendente")
     return {"receita_total": receita, "custos_total": custos, "lucro_liquido": receita - custos, "pendente": pendente}
 
