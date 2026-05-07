@@ -162,7 +162,7 @@
     <a class="nav-item" id="nav-produtos" onclick="showView('produtos',this);fecharSidebar()"><span class="nav-icon">◈</span> Produtos</a>
     <a class="nav-item" id="nav-fiado" onclick="showView('fiado',this);fecharSidebar()"><span class="nav-icon">⏱</span> Fiado</a>
     <div class="nav-section" style="margin-top:1rem;">Relatorios</div>
-    <a class="nav-item" href="https://sistema-wallys-do-gelo-production.up.railway.app/relatorio/csv"><span class="nav-icon">⬇</span> Baixar CSV</a>
+    <a class="nav-item" onclick="baixarCSV()"><span class="nav-icon">⬇</span> Baixar CSV</a>
     <div class="sidebar-footer">
       <div class="user-badge"><span class="user-dot"></span><span id="usuario-logado">-</span></div>
       <div class="logout-btn" onclick="logout()">Sair</div>
@@ -181,7 +181,6 @@
       </div>
     </div>
 
-    <!-- DASHBOARD -->
     <div class="view active" id="view-dashboard">
       <div class="cards">
         <div class="card"><div class="card-label"><span class="card-dot" style="background:var(--green)"></span>Receita</div><div class="card-value c-green" id="card-receita">R$ 0,00</div><span class="card-badge badge-green">Vendas pagas</span></div>
@@ -198,8 +197,8 @@
           <div class="panel-header"><div class="panel-title">Produtos</div></div>
           <div class="produto-row">
             <div style="width:40px;height:40px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🧊</div>
-            <div class="produto-info"><div class="produto-nome">Gelo em Cubo</div><div class="produto-detail">Custo R$4,25 · Venda R$7,00</div><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--accent);"></div></div></div>
-            <div class="produto-lucro c-green">R$2,75</div>
+            <div class="produto-info"><div class="produto-nome">Gelo em Cubo</div><div class="produto-detail">Custo R$4,00 · Venda R$7,00</div><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--accent);"></div></div></div>
+            <div class="produto-lucro c-green">R$3,00</div>
           </div>
           <div class="produto-row">
             <div style="width:40px;height:40px;border-radius:10px;background:#9b72ff18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🍓</div>
@@ -214,7 +213,6 @@
       </div>
     </div>
 
-    <!-- TRANSACOES -->
     <div class="view" id="view-transacoes">
       <div class="panel">
         <div class="panel-header"><div class="panel-title">Todas as Transacoes</div><button class="btn btn-primary" onclick="abrirModal()">+ Nova</button></div>
@@ -227,19 +225,17 @@
       </div>
     </div>
 
-    <!-- PRODUTOS -->
     <div class="view" id="view-produtos">
       <div class="panel">
         <div class="panel-header"><div class="panel-title">Tabela de Produtos</div></div>
         <table><thead><tr><th>Produto</th><th>Custo</th><th>Venda</th><th>Lucro/un</th></tr></thead>
         <tbody>
-          <tr><td>🧊 Gelo em Cubo</td><td class="c-red">R$4,25</td><td class="c-green">R$7,00</td><td class="c-accent">R$2,75</td></tr>
+          <tr><td>🧊 Gelo em Cubo</td><td class="c-red">R$4,00</td><td class="c-green">R$7,00</td><td class="c-accent">R$3,00</td></tr>
           <tr><td>🍓 Gelo Saborizado</td><td class="c-red">R$2,90</td><td class="c-green">R$6,00</td><td class="c-accent">R$3,10</td></tr>
         </tbody></table>
       </div>
     </div>
 
-    <!-- FIADO -->
     <div class="view" id="view-fiado">
       <div class="panel">
         <div class="panel-header">
@@ -262,7 +258,6 @@
   <button class="fab" onclick="abrirModal()">+</button>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="fecharModalFora(event)">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -270,7 +265,6 @@
       <div class="modal-title" id="modal-title">Nova Transacao</div>
       <button class="modal-close" onclick="fecharModal()">✕</button>
     </div>
-
     <div class="form-grid">
       <div class="form-group">
         <label class="form-label">Tipo</label>
@@ -288,16 +282,11 @@
         </select>
       </div>
     </div>
-
-    <!-- QUANTIDADE (so para vendas de gelo) -->
     <div id="bloco-quantidade" class="form-group">
       <label class="form-label">Quantidade de unidades</label>
       <input type="number" id="f-quantidade" min="1" placeholder="Ex: 5" inputmode="numeric" oninput="atualizarCalculo()"/>
     </div>
-
-    <!-- PREVIEW DO VALOR CALCULADO -->
     <div class="valor-preview" id="valor-preview">Total: R$ 0,00</div>
-
     <div class="form-grid">
       <div class="form-group">
         <label class="form-label">Valor Total (R$)</label>
@@ -311,12 +300,10 @@
         </select>
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Observacoes</label>
       <input type="text" id="f-obs" placeholder="Ex: Cliente Joao, pagara sexta"/>
     </div>
-
     <button class="btn btn-primary" id="btn-registrar" style="width:100%;padding:14px;font-size:15px;margin-top:8px;border-radius:12px;" onclick="registrar()">Registrar</button>
   </div>
 </div>
@@ -329,7 +316,6 @@ let chartInstance = null;
 let editandoId = null;
 let viewAtual = 'dashboard';
 
-// Precos dos produtos
 const PRECOS = {
   'Gelo em Cubo':    { venda: 7.00,  custo: 4.00 },
   'Gelo Saborizado': { venda: 6.00,  custo: 2.90 },
@@ -348,7 +334,13 @@ function showToast(msg, cor) {
   setTimeout(function(){ t.style.display='none'; }, 3000);
 }
 
-// ── CALCULO AUTOMATICO ──
+function authHeader() {
+  var token = localStorage.getItem('wallys_token');
+  return token
+    ? {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
+    : {'Content-Type': 'application/json'};
+}
+
 function atualizarCalculo() {
   var tipo = document.getElementById('f-tipo').value;
   var produto = document.getElementById('f-produto').value;
@@ -356,8 +348,6 @@ function atualizarCalculo() {
   var blocoQtd = document.getElementById('bloco-quantidade');
   var preview = document.getElementById('valor-preview');
   var valorEl = document.getElementById('f-valor');
-
-  // Mostra campo quantidade so para vendas de gelo (nao outro)
   if (tipo === 'saida' && produto !== 'Outro') {
     blocoQtd.style.display = 'block';
     var qtd = parseInt(qtdEl.value) || 0;
@@ -367,10 +357,7 @@ function atualizarCalculo() {
       valorEl.value = total.toFixed(2);
       preview.textContent = 'Total: ' + fmt(total) + ' (' + qtd + ' x ' + fmt(preco) + ')';
       preview.style.display = 'block';
-    } else {
-      preview.style.display = 'none';
-      if (!qtd) valorEl.value = '';
-    }
+    } else { preview.style.display = 'none'; if (!qtd) valorEl.value = ''; }
   } else if (tipo === 'entrada' && produto !== 'Outro') {
     blocoQtd.style.display = 'block';
     var qtd2 = parseInt(qtdEl.value) || 0;
@@ -380,10 +367,7 @@ function atualizarCalculo() {
       valorEl.value = total2.toFixed(2);
       preview.textContent = 'Total: ' + fmt(total2) + ' (' + qtd2 + ' x ' + fmt(preco2) + ')';
       preview.style.display = 'block';
-    } else {
-      preview.style.display = 'none';
-      if (!qtd2) valorEl.value = '';
-    }
+    } else { preview.style.display = 'none'; if (!qtd2) valorEl.value = ''; }
   } else {
     blocoQtd.style.display = 'none';
     preview.style.display = 'none';
@@ -402,7 +386,9 @@ async function fazerLogin() {
       body:JSON.stringify({usuario:usuario, senha:senha})
     });
     if (res.ok) {
+      var data = await res.json();
       localStorage.setItem('wallys_user', usuario);
+      localStorage.setItem('wallys_token', data.token);
       entrarNoApp(usuario);
     } else {
       document.getElementById('login-erro').style.display = 'block';
@@ -420,6 +406,7 @@ function entrarNoApp(usuario) {
 
 function logout() {
   localStorage.removeItem('wallys_user');
+  localStorage.removeItem('wallys_token');
   document.body.classList.remove('logged-in');
   document.getElementById('l-usuario').value = '';
   document.getElementById('l-senha').value = '';
@@ -428,7 +415,8 @@ function logout() {
 
 window.addEventListener('load', function() {
   var usuario = localStorage.getItem('wallys_user');
-  if (usuario) entrarNoApp(usuario);
+  var token = localStorage.getItem('wallys_token');
+  if (usuario && token) entrarNoApp(usuario);
 });
 
 // ── SIDEBAR ──
@@ -440,14 +428,12 @@ function fecharSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
 }
-
 function setBnav(name) {
   document.querySelectorAll('.bnav-item').forEach(function(b){ b.classList.remove('active'); });
   var el = document.getElementById('bn-'+name);
   if (el) el.classList.add('active');
 }
 
-// ── VIEWS ──
 var titles = {
   dashboard: ['Dashboard','Visao geral do mes atual'],
   transacoes: ['Transacoes','Historico completo'],
@@ -461,7 +447,6 @@ function showView(name, sidebarEl) {
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   document.getElementById('view-'+name).classList.add('active');
   if (sidebarEl) sidebarEl.classList.add('active');
-  // Ativa nav correta na sidebar
   var navEl = document.getElementById('nav-'+name);
   if (navEl) navEl.classList.add('active');
   if (titles[name]) {
@@ -473,7 +458,6 @@ function showView(name, sidebarEl) {
   if (name === 'dashboard') carregarTudo();
 }
 
-// ── BOTAO ATUALIZAR (atualiza a pagina atual) ──
 function atualizarPaginaAtual() {
   if (viewAtual === 'dashboard') carregarTudo();
   else if (viewAtual === 'transacoes') { carregarTudo(); carregarTabela(); }
@@ -482,10 +466,23 @@ function atualizarPaginaAtual() {
   showToast('Atualizado!', 'var(--accent)');
 }
 
+async function baixarCSV() {
+  var token = localStorage.getItem('wallys_token');
+  var res = await fetch(API+'/relatorio/csv', {headers: {'Authorization': 'Bearer ' + token}});
+  var blob = await res.blob();
+  var url = window.URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'relatorio-wallys.csv';
+  a.click();
+}
+
 // ── DATA ──
 async function carregarResumo() {
   try {
-    var d = await (await fetch(API+'/resumo')).json();
+    var res = await fetch(API+'/resumo', {headers: authHeader()});
+    if (res.status === 401) { logout(); return; }
+    var d = await res.json();
     document.getElementById('card-receita').textContent = fmt(d.receita_total);
     document.getElementById('card-custos').textContent = fmt(d.custos_total);
     document.getElementById('card-lucro').textContent = fmt(d.lucro_liquido);
@@ -510,7 +507,9 @@ function desenharGrafico(r, c, l) {
 
 async function carregarUltimas() {
   try {
-    var json = await (await fetch(API+'/transacoes')).json();
+    var res = await fetch(API+'/transacoes', {headers: authHeader()});
+    if (res.status === 401) { logout(); return; }
+    var json = await res.json();
     var lista = (json.data||[]).slice(-5).reverse();
     var el = document.getElementById('ultimas-tx');
     if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted2);font-size:13px;">Nenhuma transacao ainda.</div>'; return; }
@@ -523,7 +522,9 @@ async function carregarUltimas() {
 
 async function carregarTabela() {
   try {
-    var json = await (await fetch(API+'/transacoes')).json();
+    var res = await fetch(API+'/transacoes', {headers: authHeader()});
+    if (res.status === 401) { logout(); return; }
+    var json = await res.json();
     var lista = (json.data||[]).reverse();
     document.getElementById('tabela-todas').innerHTML = lista.map(function(t) {
       var obs = (t.observacoes||'').replace(/\\/g,'').replace(/'/g,' ');
@@ -536,7 +537,9 @@ async function carregarTabela() {
 
 async function carregarFiado() {
   try {
-    var json = await (await fetch(API+'/transacoes')).json();
+    var res = await fetch(API+'/transacoes', {headers: authHeader()});
+    if (res.status === 401) { logout(); return; }
+    var json = await res.json();
     var lista = (json.data||[]).filter(function(t){ return t.status==='pendente'; }).reverse();
     var tbody = document.getElementById('tabela-fiado');
     if (!lista.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted2);padding:2rem;">Nenhum fiado pendente!</td></tr>'; return; }
@@ -546,7 +549,6 @@ async function carregarFiado() {
   } catch(e) {}
 }
 
-// ── EDITAR ──
 function editarTransacao(id, tipo, produto, valor, status, observacoes) {
   editandoId = id;
   document.getElementById('f-tipo').value = tipo;
@@ -562,21 +564,18 @@ function editarTransacao(id, tipo, produto, valor, status, observacoes) {
   abrirModal();
 }
 
-// ── DELETAR ──
 async function deletarTransacao(id) {
   if (!confirm('Tem certeza que deseja excluir esta transacao?')) return;
   try {
-    await fetch(API+'/transacoes/'+id, {method:'DELETE'});
+    await fetch(API+'/transacoes/'+id, {method:'DELETE', headers: authHeader()});
     showToast('Transacao excluida!', 'var(--red)');
     carregarTudo();
     carregarTabela();
   } catch(e) { alert('Erro ao excluir!'); }
 }
 
-// ── MODAL ──
 function abrirModal() {
   if (!editandoId) {
-    // Reset para nova transacao
     document.getElementById('f-tipo').value = 'saida';
     document.getElementById('f-produto').value = 'Gelo em Cubo';
     document.getElementById('f-quantidade').value = '';
@@ -599,7 +598,6 @@ function fecharModal() {
 
 function fecharModalFora(e) { if (e.target.id==='modal') fecharModal(); }
 
-// ── REGISTRAR / SALVAR ──
 async function registrar() {
   var valor = parseFloat(document.getElementById('f-valor').value);
   if (!valor || valor <= 0) { alert('Informe um valor valido!'); return; }
@@ -614,10 +612,10 @@ async function registrar() {
   };
   try {
     if (editandoId) {
-      await fetch(API+'/transacoes/'+editandoId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      await fetch(API+'/transacoes/'+editandoId, {method:'PUT', headers: authHeader(), body:JSON.stringify(body)});
       showToast('Transacao atualizada!', 'var(--accent)');
     } else {
-      await fetch(API+'/transacoes', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      await fetch(API+'/transacoes', {method:'POST', headers: authHeader(), body:JSON.stringify(body)});
       showToast('Transacao registrada!', 'var(--green)');
     }
     fecharModal();
