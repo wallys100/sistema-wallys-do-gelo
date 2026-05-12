@@ -3,7 +3,7 @@ from pydantic import BaseModel, field_validator
 
 # Mapa central de produtos válidos — edite aqui para adicionar novos tipos
 PRODUTOS_VALIDOS = {
-    "Gelo em Cubos": {
+    "Gelo em Cubo": {
         "secao": "cubos",
         "sku": "GELO-CUBOS-001",
     },

@@ -651,13 +651,18 @@ async function registrar() {
     data_venda: dataVenda
   };
   try {
+    var res;
     if (editandoId) {
-      await fetch(API+'/transacoes/'+editandoId, {method:'PUT', headers: authHeader(), body:JSON.stringify(body)});
-      showToast('Atualizada!', 'var(--accent)');
+      res = await fetch(API+'/transacoes/'+editandoId, {method:'PUT', headers: authHeader(), body:JSON.stringify(body)});
     } else {
-      await fetch(API+'/transacoes', {method:'POST', headers: authHeader(), body:JSON.stringify(body)});
-      showToast('Registrada!', 'var(--green)');
+      res = await fetch(API+'/transacoes', {method:'POST', headers: authHeader(), body:JSON.stringify(body)});
     }
+    if (!res.ok) {
+      var err = await res.json();
+      alert('Erro: ' + (err.detail || 'Tente novamente'));
+      return;
+    }
+    showToast(editandoId ? 'Atualizada!' : 'Registrada!', editandoId ? 'var(--accent)' : 'var(--green)');
     fecharModal();
     carregarTudo();
     if (viewAtual === 'transacoes') carregarTabela();
