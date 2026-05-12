@@ -16,12 +16,15 @@ app = FastAPI(title="Sistema Wallys do Gelo")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://wallys100.github.io"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-SECRET_KEY = os.getenv("SECRET_KEY", "wallys-gelo-secret-2024")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY não configurada. Configure a variável de ambiente.")
+
 ALGORITHM = "HS256"
 security = HTTPBearer()
 
@@ -176,7 +179,7 @@ def exportar_csv(usuario=Depends(verificar_token)):
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["ID", "Tipo", "Seção", "SKU", "Produto", "Fornecedor",
-                     "Valor", "Quantidade", "Status", "Observações", "Data"])
+                    "Valor", "Quantidade", "Status", "Observações", "Data"])
     for t in data:
         writer.writerow([
             t.get("id", ""),
