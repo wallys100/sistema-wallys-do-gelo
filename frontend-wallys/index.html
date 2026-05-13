@@ -659,7 +659,8 @@ async function registrar() {
     }
     if (!res.ok) {
       var err = await res.json();
-      alert('Erro: ' + (err.detail || 'Tente novamente'));
+      var msg = typeof err.detail === 'string' ? err.detail : (Array.isArray(err.detail) ? err.detail.map(function(e){return e.msg}).join(', ') : 'Tente novamente');
+      alert('Erro: ' + msg);
       return;
     }
     showToast(editandoId ? 'Atualizada!' : 'Registrada!', editandoId ? 'var(--accent)' : 'var(--green)');
